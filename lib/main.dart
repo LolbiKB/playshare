@@ -10,8 +10,15 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
-        ChangeNotifierProvider(create: (context) => PlayListProvider()),
         ChangeNotifierProvider(create: (context) => DirectoryListProvider()),
+        ChangeNotifierProxyProvider<DirectoryListProvider, PlayListProvider>(
+          create: (_) => PlayListProvider(),
+          update: (_, directoryListProvider, playListProvider) {
+            playListProvider
+                ?.updateDirectoryList(directoryListProvider.directoryList);
+            return playListProvider ?? PlayListProvider();
+          },
+        ),
       ],
       child: const MyApp(),
     ),

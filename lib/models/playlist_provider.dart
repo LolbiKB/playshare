@@ -5,32 +5,105 @@ import 'package:flutter/material.dart';
 import 'package:playshare/models/song.dart';
 
 class PlayListProvider extends ChangeNotifier {
+  //list of content directories
+  List<Directory> _directoryList = [];
+  final String defaultArtistName = 'Unknown Artist';
+  final String defaultImgPath = 'assets/img/default.png';
+  final Map<String, String> _artistDataBaseImgSrcMap = {
+    'ed_sheeran': 'assets/img/ed_sheeran.jpg',
+    'shawn_mendes': 'assets/img/shawn_mendes.jpg',
+    'guns_n_roses': 'assets/img/guns_n_roses.jpg',
+  };
   // playlist of songs
-  final List<Song> _playlist = [
-    // song 1
-    Song(
-      songName: "Wonder",
-      artistName: "Shawn Mendes",
-      albumArtImagePath: "assets/img/shawn_mendes.jpg",
-      audioPath: "music/wonder-shawn_mendes.mp3",
-    ),
+  final List<Song> _playlist = [];
 
-    // song 2
-    Song(
-      songName: "Perfect",
-      artistName: "Ed Sheeran",
-      albumArtImagePath: "assets/img/ed_sheeran.jpg",
-      audioPath: "music/perfect-ed_sheeran.mp3",
-    ),
+  void updateDirectoryList(List<Directory> directories) {
+    _directoryList = directories;
+    // Rescan for songs based on the updated directory list
+    rescanForSongs();
+  }
 
-    // song 3
-    Song(
-      songName: "Estranged",
-      artistName: "Guns N Roses",
-      albumArtImagePath: "assets/img/guns_n_roses.jpg",
-      audioPath: "music/estranged-guns_n_roses.mp3",
-    ),
-  ];
+  void rescanForSongs() {
+    // Logic to scan for songs in the directories
+    for (Directory directory in _directoryList) {
+      addSongsFromDirectory(directory);
+    }
+
+    // Notify listeners about any changes
+    notifyListeners();
+  }
+
+  void addSongsFromDirectory(Directory directory) {
+    List<FileSystemEntity> files = directory.listSync(followLinks: false);
+    debugPrint(files.length.toString());
+    for (FileSystemEntity entity in files) {
+      if (entity is! File) {
+        debugPrint("No files match in directory");
+        continue;
+      }
+
+      String filePath = entity.path;
+      String fileName = filePath.split(Platform.pathSeparator).last;
+
+      // Check if the file has the .mp3 extension before processing
+      if (!(fileName.toLowerCase().endsWith('.mp3') ||
+          fileName.toLowerCase().endsWith('.m4a'))) {
+        debugPrint("No audio files matched in directory");
+        //if not matched audio extension
+        continue;
+      }
+
+      String fileNameWithoutExtension =
+          fileName.substring(0, fileName.lastIndexOf('.'));
+      String songName = fileNameWithoutExtension;
+      String artistName = defaultArtistName;
+      String imgPath = defaultImgPath;
+      String audioPath = filePath;
+
+      // maybe special case
+      if (fileNameWithoutExtension.contains('-')) {
+        List<String> parts = fileNameWithoutExtension.split('-');
+        if (parts.length >= 2) {
+          String textBeforeHyphen = parts[0];
+          String textAfterHyphen = parts.sublist(1).join('-');
+          // songName
+          songName = textBeforeHyphen;
+
+          // format artistName
+          artistName = textAfterHyphen.replaceAll('_', ' ');
+          artistName = artistName
+              .split(' ')
+              .map((word) => word[0].toUpperCase() + word.substring(1))
+              .join(' ');
+
+          // if match defaultImgSrc
+          if (_artistDataBaseImgSrcMap.containsKey(textAfterHyphen)) {
+            imgPath = _artistDataBaseImgSrcMap[textAfterHyphen]!;
+          }
+        }
+      }
+
+      //final add to List
+      debugPrint("Song added:");
+      debugPrint("  songName: $songName");
+      debugPrint("  artist: $artistName");
+      debugPrint("  imgPath: $imgPath");
+      debugPrint("  audio: $audioPath");
+
+      addSong(Song(
+          songName: songName,
+          artistName: artistName,
+          albumArtImagePath: imgPath,
+          audioPath: audioPath));
+    }
+  }
+
+  void addSong(Song songToAdd) {
+    _playlist.add(songToAdd);
+    //listenToDuration();
+  }
+
+  // Other methods and logic
 
   //current song playign index
   int? _currentSongIndex;
@@ -50,24 +123,11 @@ class PlayListProvider extends ChangeNotifier {
   // init not playing
   bool _isPlaying = false;
 
-  // fetch file path and name
-  void fetchFilePathsAndNames(Directory directory) {
-    List<FileSystemEntity> files = directory.listSync();
-
-    for (FileSystemEntity file in files) {
-      if (file is File) {
-        String filePath = file.path;
-        String fileName = file.path.split(Platform.pathSeparator).last;
-        debugPrint('File Name: $fileName, File Path: $filePath');
-      }
-    }
-  }
-
   // play song
   void play() async {
     final String path = _playlist[_currentSongIndex!].audioPath;
     await _audioPlayer.stop(); // stop current song
-    await _audioPlayer.play(AssetSource(path)); // play song
+    await _audioPlayer.play(DeviceFileSource(path)); // play song
     _isPlaying = true;
     notifyListeners();
   }
