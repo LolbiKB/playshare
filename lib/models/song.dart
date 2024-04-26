@@ -5,7 +5,7 @@ class Song {
   final String audioPath;
 
   Song({
-    required this.songName, 
+    required this.songName,
     required this.artistName,
     required this.albumArtImagePath,
     required this.audioPath,

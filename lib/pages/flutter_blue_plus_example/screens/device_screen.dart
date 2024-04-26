@@ -7,7 +7,6 @@ import 'package:playshare/models/song.dart';
 import 'package:playshare/pages/flutter_blue_plus_example/widgets/share_song_tile.dart';
 import 'package:provider/provider.dart';
 
-import '../widgets/service_tile.dart';
 import '../widgets/characteristic_tile.dart';
 import '../widgets/descriptor_tile.dart';
 import '../utils/snackbar.dart';

@@ -29,6 +29,12 @@ class _ContentPageState extends State<ContentPage> {
     directoryListProvider.addListener(_onDirectoryListChanged);
   }
 
+  @override
+  void dispose() {
+    directoryListProvider.removeListener(_onDirectoryListChanged);
+    super.dispose();
+  }
+
   void _onDirectoryListChanged() {
     setState(() {
       // Update the UI when the directory list changes
@@ -36,23 +42,26 @@ class _ContentPageState extends State<ContentPage> {
   }
 
   void pickADirectory() async {
-    if (await Permission.storage.request().isGranted) {
-      // Either the permission was already granted before or the user just granted it.
-    }
+    //if (await Permission.storage.request().isGranted) {
+    // Permission granted
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
 
     if (selectedDirectory != null) {
-      setState(() {
-        directoryListProvider.addDirectory(Directory(selectedDirectory));
-      });
+      if (mounted) {
+        setState(() {
+          directoryListProvider.addDirectory(Directory(selectedDirectory));
+        });
+      }
     }
+    //}
   }
 
-  // remove a directory
   void deleteDirectory(Directory directory) {
-    setState(() {
-      directoryListProvider.removeDirectory(directory);
-    });
+    if (mounted) {
+      setState(() {
+        directoryListProvider.removeDirectory(directory);
+      });
+    }
   }
 
   Widget buildAddDirectoryButton(BuildContext context) {

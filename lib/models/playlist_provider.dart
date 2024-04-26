@@ -19,6 +19,7 @@ class PlayListProvider extends ChangeNotifier {
 
   void updateDirectoryList(List<Directory> directories) {
     _directoryList = directories;
+    _playlist.clear();
     // Rescan for songs based on the updated directory list
     rescanForSongs();
   }
@@ -28,14 +29,11 @@ class PlayListProvider extends ChangeNotifier {
     for (Directory directory in _directoryList) {
       addSongsFromDirectory(directory);
     }
-
-    // Notify listeners about any changes
-    notifyListeners();
   }
 
   void addSongsFromDirectory(Directory directory) {
     List<FileSystemEntity> files = directory.listSync(followLinks: false);
-    debugPrint(files.length.toString());
+
     for (FileSystemEntity entity in files) {
       if (entity is! File) {
         debugPrint("No files match in directory");
@@ -55,6 +53,12 @@ class PlayListProvider extends ChangeNotifier {
 
       String fileNameWithoutExtension =
           fileName.substring(0, fileName.lastIndexOf('.'));
+
+      if (fileNameWithoutExtension.isEmpty) {
+        debugPrint("File name without extension is empty");
+        continue;
+      }
+
       String songName = fileNameWithoutExtension;
       String artistName = defaultArtistName;
       String imgPath = defaultImgPath;
@@ -91,16 +95,19 @@ class PlayListProvider extends ChangeNotifier {
       debugPrint("  audio: $audioPath");
 
       addSong(Song(
-          songName: songName,
-          artistName: artistName,
-          albumArtImagePath: imgPath,
-          audioPath: audioPath));
+        songName: songName,
+        artistName: artistName,
+        albumArtImagePath: imgPath,
+        audioPath: audioPath,
+      ));
     }
   }
 
   void addSong(Song songToAdd) {
     _playlist.add(songToAdd);
-    //listenToDuration();
+
+    // Notify listeners about any changes
+    notifyListeners();
   }
 
   // Other methods and logic
@@ -142,7 +149,7 @@ class PlayListProvider extends ChangeNotifier {
   // resume
   void resume() async {
     await _audioPlayer.resume();
-    _isPlaying = false;
+    _isPlaying = true;
     notifyListeners();
   }
 

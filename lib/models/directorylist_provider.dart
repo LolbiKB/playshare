@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class DirectoryListProvider extends ChangeNotifier {
   final List<Directory> _directoryList = [];
@@ -13,14 +12,7 @@ class DirectoryListProvider extends ChangeNotifier {
   final bool _isFetchedOnce = false;
 
   DirectoryListProvider() {
-    checkRequestPermission();
     _initializeDirectories();
-  }
-
-  void checkRequestPermission() async {
-    if (await Permission.contacts.request().isGranted) {
-      debugPrint("Permission Granted");
-    }
   }
 
   void _initializeDirectories() async {

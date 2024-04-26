@@ -1,5 +1,3 @@
-import 'dart:isolate';
-
 import 'package:ble_peripheral/ble_peripheral.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert' show utf8;
@@ -52,7 +50,7 @@ class _BlePeripheralPageState extends State<BlePeripheralPage> {
     // Start advertising
     await BlePeripheral.startAdvertising(
       services: [transferService],
-      localName: "TestBle",
+      localName: "playshare",
     );
 
     setState(() {
@@ -64,7 +62,7 @@ class _BlePeripheralPageState extends State<BlePeripheralPage> {
     await BlePeripheral.stopAdvertising();
 
     setState(() {
-      advertisingState = true;
+      advertisingState = false;
     });
   }
 
