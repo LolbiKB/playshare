@@ -197,10 +197,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "45c70b43df893027e441a6fa0aacc8f484fb9f9c60c746dc8f1dc4f774cf55cd"
+      sha256: "29c90806ac5f5fb896547720b73b17ee9aed9bba540dc5d91fe29f8c5745b10a"
       url: "https://pub.dev"
     source: hosted
-    version: "8.0.2"
+    version: "8.0.3"
   fixnum:
     dependency: transitive
     description:
@@ -235,7 +235,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "77ab329a30ab8716d66929f643588f336fd63eac"
+      resolved-ref: d712854b6c12840f9f85e31bd5f4daebd6bc8dbb
       url: "https://github.com/LolbiKB/flutter_bluetooth_serial.git"
     source: git
     version: "0.4.0"

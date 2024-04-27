@@ -35,7 +35,7 @@ class _SharePageState extends State<SharePage> {
     if (statuses[Permission.bluetoothScan] == PermissionStatus.granted &&
         statuses[Permission.bluetoothAdvertise] == PermissionStatus.granted &&
         statuses[Permission.bluetoothConnect] == PermissionStatus.granted) {
-      // permission granted
+      debugPrint("All bluetooth permission granted");
     }
   }
 
