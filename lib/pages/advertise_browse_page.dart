@@ -5,87 +5,17 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
-
-Route<dynamic> generateRoute(RouteSettings settings) {
-  switch (settings.name) {
-    case '/':
-      return MaterialPageRoute(builder: (_) => Home());
-    case 'browser':
-      return MaterialPageRoute(
-          builder: (_) => DevicesListScreen(deviceType: DeviceType.browser));
-    case 'advertiser':
-      return MaterialPageRoute(
-          builder: (_) => DevicesListScreen(deviceType: DeviceType.advertiser));
-    default:
-      return MaterialPageRoute(
-          builder: (_) => Scaffold(
-                body: Center(
-                    child: Text('No route defined for ${settings.name}')),
-              ));
-  }
-}
-
-class ShareNearApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateRoute: generateRoute,
-      initialRoute: '/',
-    );
-  }
-}
-
-class Home extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, 'browser');
-              },
-              child: Container(
-                color: Colors.red,
-                child: Center(
-                    child: Text(
-                  'BROWSER',
-                  style: TextStyle(color: Colors.white, fontSize: 40),
-                )),
-              ),
-            ),
-          ),
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, 'advertiser');
-              },
-              child: Container(
-                color: Colors.green,
-                child: Center(
-                    child: Text(
-                  'ADVERTISER',
-                  style: TextStyle(color: Colors.white, fontSize: 40),
-                )),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+import 'package:playshare/pages/connected_page.dart';
 
 enum DeviceType { advertiser, browser }
 
 class DevicesListScreen extends StatefulWidget {
-  const DevicesListScreen({required this.deviceType});
+  const DevicesListScreen({super.key, required this.deviceType});
 
   final DeviceType deviceType;
 
   @override
-  _DevicesListScreenState createState() => _DevicesListScreenState();
+  State<DevicesListScreen> createState() => _DevicesListScreenState();
 }
 
 class _DevicesListScreenState extends State<DevicesListScreen> {
@@ -93,7 +23,6 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
   List<Device> connectedDevices = [];
   late NearbyService nearbyService;
   late StreamSubscription subscription;
-  late StreamSubscription receivedDataSubscription;
 
   bool isInit = false;
 
@@ -106,7 +35,6 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
   @override
   void dispose() {
     subscription.cancel();
-    receivedDataSubscription.cancel();
     nearbyService.stopBrowsingForPeers();
     nearbyService.stopAdvertisingPeer();
     super.dispose();
@@ -224,31 +152,14 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
 
   _onTabItemListener(Device device) {
     if (device.state == SessionState.connected) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            final myController = TextEditingController();
-            return AlertDialog(
-              title: Text("Send message"),
-              content: TextField(controller: myController),
-              actions: [
-                TextButton(
-                  child: Text("Cancel"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text("Send"),
-                  onPressed: () {
-                    nearbyService.sendMessage(
-                        device.deviceId, myController.text);
-                    myController.text = '';
-                  },
-                )
-              ],
-            );
-          });
+      debugPrint("Pressed!");
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ShareConnectePage(
+                    device: device,
+                    nearbyService: nearbyService,
+                  )));
     }
   }
 
@@ -267,6 +178,7 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
           deviceID: device.deviceId,
           deviceName: device.deviceName,
         );
+
         break;
       case SessionState.connected:
         nearbyService.disconnectPeer(deviceID: device.deviceId);
@@ -284,6 +196,7 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
       devInfo = androidInfo.model;
     }
+
     if (Platform.isIOS) {
       IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
       devInfo = iosInfo.localizedModel;
@@ -307,10 +220,11 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
             }
           }
         });
+
     subscription =
         nearbyService.stateChangedSubscription(callback: (devicesList) {
       devicesList.forEach((element) {
-        print(
+        debugPrint(
             " deviceId: ${element.deviceId} | deviceName: ${element.deviceName} | state: ${element.state}");
 
         if (Platform.isAndroid) {
@@ -330,16 +244,6 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
             .where((d) => d.state == SessionState.connected)
             .toList());
       });
-    });
-
-    receivedDataSubscription =
-        nearbyService.dataReceivedSubscription(callback: (data) {
-      print("dataReceivedSubscription: ${jsonEncode(data)}");
-      showToast(jsonEncode(data),
-          context: context,
-          axis: Axis.horizontal,
-          alignment: Alignment.center,
-          position: StyledToastPosition.bottom);
     });
   }
 }

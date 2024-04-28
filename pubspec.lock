@@ -230,15 +230,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.32.4"
-  flutter_bluetooth_serial:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: HEAD
-      resolved-ref: d712854b6c12840f9f85e31bd5f4daebd6bc8dbb
-      url: "https://github.com/LolbiKB/flutter_bluetooth_serial.git"
-    source: git
-    version: "0.4.0"
   flutter_bluetooth_sharing:
     dependency: "direct main"
     description:

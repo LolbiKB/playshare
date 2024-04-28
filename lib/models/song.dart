@@ -10,4 +10,13 @@ class Song {
     required this.albumArtImagePath,
     required this.audioPath,
   });
+
+  // Convert Song object to a JSON-compatible map
+  Map<String, dynamic> toJson() {
+    return {
+      'songName': songName,
+      'artistName': artistName,
+      'albumArtImagePath': albumArtImagePath,
+    };
+  }
 }
