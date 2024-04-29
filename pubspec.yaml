@@ -48,7 +48,8 @@ dependencies:
   ble_peripheral: ^2.2.3
   file_picker: ^8.0.2
   path_provider: ^2.1.3
-  flutter_nearby_connections: ^1.1.2
+  flutter_nearby_connections:
+    git: https://github.com/leechupe/flutter_nearby_connections.git
   flutter_styled_toast: ^2.2.1
   scoped_model: ^2.0.0
 

@@ -91,6 +91,10 @@ class DirectoryListProvider extends ChangeNotifier {
     }
   }
 
+  void refreshDirectoryList() {
+    fetchAndReadFileToDirectoryList();
+  }
+
   List<Directory> get directoryList => _directoryList;
   bool get isFetchedOnce => _isFetchedOnce;
 }

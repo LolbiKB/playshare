@@ -16,7 +16,7 @@ class Song {
     return {
       'songName': songName,
       'artistName': artistName,
-      'albumArtImagePath': albumArtImagePath,
+      'audioPath': audioPath,
     };
   }
 }

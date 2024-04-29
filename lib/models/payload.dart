@@ -1,4 +1,13 @@
-enum MessageType { requestToSendSong, sendingSong, genericMessage, error }
+enum MessageType {
+  requestToSendSong,
+  acceptRequest,
+  cancelRequest,
+  readyToReceiveSong,
+  fileTransferComplete,
+  fileInfo,
+  genericMessage,
+  error
+}
 
 class Payload {
   MessageType type;
@@ -7,7 +16,7 @@ class Payload {
   Payload(this.type, this.data);
 
   List<int> encode() {
-    // Encode type into the first 2 bits of the first byte
+    // Encode type into the first byte
     int firstByte = type.index << 6;
 
     // Combine the first byte with the second byte (reserved)

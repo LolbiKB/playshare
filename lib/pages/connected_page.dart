@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:playshare/models/directorylist_provider.dart';
 import 'package:playshare/models/payload.dart';
 import 'package:playshare/models/playlist_provider.dart';
 import 'package:playshare/models/song.dart';
@@ -25,6 +28,7 @@ class ShareConnectePage extends StatefulWidget {
 
 class _ShareConnectePageState extends State<ShareConnectePage> {
   // get the playlist provider
+  late final DirectoryListProvider directoryListProvider;
   late final dynamic playListProvider;
   late StreamSubscription receivedDataSubscription;
 
@@ -35,6 +39,10 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
   bool isAccepted = false;
   Song? songToSend;
   String? pathToSaveSong;
+  String? songFileName;
+
+  //song info
+  int? songSize;
 
   @override
   void initState() {
@@ -42,6 +50,14 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
 
     // get playlist provider
     playListProvider = Provider.of<PlayListProvider>(context, listen: false);
+
+    // get directoryList provider
+
+    //get directorylist provider
+    directoryListProvider =
+        Provider.of<DirectoryListProvider>(context, listen: false);
+
+    directoryListProvider.addListener(_onDirectoryListChanged);
 
     receivedDataSubscription =
         widget.nearbyService.dataReceivedSubscription(callback: (data) {
@@ -67,10 +83,10 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
         .toList();
   }
 
-  /* sending */
-  Future<Uint8List> readFile(String filePath) async {
-    File file = File(filePath);
-    return await file.readAsBytes();
+  void _onDirectoryListChanged() {
+    setState(() {
+      // Update the UI when the directory list changes
+    });
   }
 
   // Modify the function signature to accept a Song object
@@ -100,6 +116,7 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
 
     // set to requester
     setState(() {
+      isRequestingToSend = true;
       isRequester = true;
     });
 
@@ -115,7 +132,7 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
               child: const Text("Cancel"),
               onPressed: () {
                 // Start the timer
-                Timer(Duration(seconds: 10), () {
+                Timer(const Duration(seconds: 10), () {
                   if (isRequestingToSend) {
                     // Timer expired, handle timeout
                     handleConfirmationTimeout();
@@ -130,76 +147,95 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     );
   }
 
-  Future<void> sendRequestAccept() async {
-    try {
-      // Create payload with the message type (RequestToSendSong) and 4 bytes of all ones
-      Payload payload = Payload(MessageType.requestToSendSong,
-          Uint8List.fromList([255, 255, 255, 255]));
+  // Function to send a message with payload
+  Future<void> sendAcceptRequest() async {
+    // Encode message into bytes
+    Uint8List messageBytes = utf8.encode('accept_request');
 
-      // Encode payload into JSON format
-      String jsonPayload = jsonEncode({
-        'type': payload.type.index,
-        'data': base64Encode(payload.data),
-      });
+    // Create payload with the specified message type (GenericMessage) and message data
+    Payload payload = Payload(MessageType.acceptRequest, messageBytes);
 
-      // Send the JSON-encoded payload
-      await widget.nearbyService
-          .sendMessage(widget.device.deviceId, jsonPayload);
+    // Encode payload into JSON format
+    String jsonPayload = jsonEncode({
+      'type': payload.type.index,
+      'data': base64Encode(payload.data),
+    });
 
-      // Optionally, you may perform any other necessary actions here after sending the request
-    } catch (e) {
-      // Handle errors
-      debugPrint('Error sending request accept: $e');
-      // Show error dialog or handle error as needed
-    }
+    // Send the JSON-encoded payload
+    await widget.nearbyService.sendMessage(widget.device.deviceId, jsonPayload);
   }
 
-  Future<void> sendRequestReadyToReceive() async {
-    try {
-      // Create payload with the message type (RequestToSendSong) and 4 bytes of all ones
-      Payload payload = Payload(MessageType.requestToSendSong,
-          Uint8List.fromList([0, 255, 255, 255]));
+  // Function to send a message with payload
+  Future<void> sendReadyToReceive() async {
+    // Encode message into bytes
+    Uint8List messageBytes = utf8.encode('ready_request');
 
-      // Encode payload into JSON format
-      String jsonPayload = jsonEncode({
-        'type': payload.type.index,
-        'data': base64Encode(payload.data),
-      });
+    // Create payload with the specified message type (GenericMessage) and message data
+    Payload payload = Payload(MessageType.readyToReceiveSong, messageBytes);
 
-      // Send the JSON-encoded payload
-      await widget.nearbyService
-          .sendMessage(widget.device.deviceId, jsonPayload);
+    // Encode payload into JSON format
+    String jsonPayload = jsonEncode({
+      'type': payload.type.index,
+      'data': base64Encode(payload.data),
+    });
 
-      // Optionally, you may perform any other necessary actions here after sending the request
-    } catch (e) {
-      // Handle errors
-      debugPrint('Error sending ready to receive: $e');
-      // Show error dialog or handle error as needed
-    }
+    // Send the JSON-encoded payload
+    await widget.nearbyService.sendMessage(widget.device.deviceId, jsonPayload);
   }
 
-  Future<void> sendRequestCancel() async {
-    try {
-      // Create payload with the message type (RequestToSendSong) and 4 bytes of all zeroes
-      Payload payload = Payload(
-          MessageType.requestToSendSong, Uint8List.fromList([0, 0, 0, 0]));
+  // Function to send a message with payload
+  Future<void> sendCancelRequest() async {
+    // Encode message into bytes
+    Uint8List messageBytes = utf8.encode('cancel_request');
 
-      // Encode payload into JSON format
-      String jsonPayload = jsonEncode({
-        'type': payload.type.index,
-        'data': base64Encode(payload.data),
-      });
+    // Create payload with the specified message type (GenericMessage) and message data
+    Payload payload = Payload(MessageType.cancelRequest, messageBytes);
 
-      // Send the JSON-encoded payload
-      await widget.nearbyService
-          .sendMessage(widget.device.deviceId, jsonPayload);
+    // Encode payload into JSON format
+    String jsonPayload = jsonEncode({
+      'type': payload.type.index,
+      'data': base64Encode(payload.data),
+    });
 
-      // Optionally, you may perform any other necessary actions here after sending the request
-    } catch (e) {
-      // Handle errors
-      debugPrint('Error sending request cancel: $e');
-      // Show error dialog or handle error as needed
-    }
+    // Send the JSON-encoded payload
+    await widget.nearbyService.sendMessage(widget.device.deviceId, jsonPayload);
+  }
+
+  // Function to send a message with payload
+  Future<void> sendFileTransferComplete() async {
+    // Encode message into bytes
+    Uint8List messageBytes = utf8.encode('file_transfer_complete');
+
+    // Create payload with the specified message type (GenericMessage) and message data
+    Payload payload = Payload(MessageType.fileTransferComplete, messageBytes);
+
+    // Encode payload into JSON format
+    String jsonPayload = jsonEncode({
+      'type': payload.type.index,
+      'data': base64Encode(payload.data),
+    });
+
+    // Send the JSON-encoded payload
+    await widget.nearbyService.sendMessage(widget.device.deviceId, jsonPayload);
+  }
+
+  Future<void> sendFileInfo() async {
+    File file = File(songToSend!.audioPath);
+    int fileSize = file.lengthSync();
+    // Encode file info into bytes
+    Uint8List infoBytes = utf8.encode(fileSize.toString());
+
+    // Create payload with the message type (FileInfo) and info data
+    Payload payload = Payload(MessageType.fileInfo, infoBytes);
+
+    // Encode payload into JSON format
+    String jsonPayload = jsonEncode({
+      'type': payload.type.index,
+      'data': base64Encode(payload.data),
+    });
+
+    // Send the JSON-encoded payload
+    await widget.nearbyService.sendMessage(widget.device.deviceId, jsonPayload);
   }
 
   // Function to send a message with payload
@@ -218,24 +254,6 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
 
     // Send the JSON-encoded payload
     await widget.nearbyService.sendMessage(deviceID, jsonPayload);
-  }
-
-  // Function to send song
-  Future<void> sendSong(String filePath) async {
-    // Read the file data
-    Uint8List fileData = await readFile(filePath);
-
-    // Create payload with the message type and file data
-    Payload payload = Payload(MessageType.sendingSong, fileData);
-
-    // Encode payload into JSON format
-    String jsonPayload = jsonEncode({
-      'type': payload.type.index,
-      'data': base64Encode(payload.data),
-    });
-
-    // Send the JSON-encoded payload
-    await widget.nearbyService.sendMessage(widget.device.deviceId, jsonPayload);
   }
 
   //send error
@@ -257,11 +275,33 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
   /* receiving */
   void handleReceivedData(Map<dynamic, dynamic> data) {
     // Extract the message string from the data
-    String? messageString = data['message'] as String?;
+    dynamic messageString = data['message'];
 
-    // Check if the message string is present
-    if (messageString == null) {
-      debugPrint('Error: Received data is missing the "message" field.');
+    // Check if the message string is valid and of type String
+    if (messageString is Uint8List) {
+      debugPrint("received package!");
+
+      sendFileTransferComplete();
+      // proccess saving to the selected
+      Directory('/storage/emulated/0/Download/.nearby')
+          .listSync()
+          .forEach((entity) {
+        if (entity is File) {
+          debugPrint("moveing $entity to $pathToSaveSong/$songFileName");
+          String newFilePath = '$pathToSaveSong/$songFileName';
+          entity.renameSync(newFilePath);
+        }
+      });
+      setState(() {
+        directoryListProvider.refreshDirectoryList();
+      });
+      resetStateReceiver();
+      showToast("receiving file",
+          context: context,
+          axis: Axis.horizontal,
+          alignment: Alignment.center,
+          position: StyledToastPosition.bottom);
+
       return;
     }
 
@@ -284,7 +324,7 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     int? typeIndex = message['type'] as int?;
     String? base64Data = message['data'] as String?;
 
-    // Check if 'typeIndex' and 'base64Data' are null
+    // Check if 'typeIndex' and 'base64Data' are present
     if (typeIndex == null || base64Data == null) {
       debugPrint('Error: Received data has invalid format.');
       return;
@@ -302,8 +342,20 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
       case MessageType.requestToSendSong:
         handleRequestToSendSong(payload);
         break;
-      case MessageType.sendingSong:
-        handleSendingSong(payload);
+      case MessageType.acceptRequest:
+        handleAcceptRequest(payload);
+        break;
+      case MessageType.cancelRequest:
+        handleCancelRequest(payload);
+        break;
+      case MessageType.readyToReceiveSong:
+        handleReadyToReceiveSong(payload);
+        break;
+      case MessageType.fileTransferComplete:
+        handlefileTransferComplete(payload);
+        break;
+      case MessageType.fileInfo:
+        handlefileInfo(payload);
         break;
       case MessageType.genericMessage:
         handleGenericMessage(payload);
@@ -316,42 +368,7 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
 
   void handleRequestToSendSong(Payload payload) {
     try {
-      // Decode payload data from Base64 into bytes
-
       Uint8List dataBytes = Uint8List.fromList(payload.data);
-
-      // check for all zeroes or all ones
-      if (isRequestingToSend) {
-        // Check if the first 4 bytes of the received data are all zeroes or all ones
-        bool isAccepted = dataBytes.length >= 4 &&
-            dataBytes[0] == 0 &&
-            dataBytes[1] == 0 &&
-            dataBytes[2] == 0 &&
-            dataBytes[3] == 0;
-        bool isRejected = dataBytes.length >= 4 &&
-            dataBytes[0] == 255 &&
-            dataBytes[1] == 255 &&
-            dataBytes[2] == 255 &&
-            dataBytes[3] == 255;
-        bool isReadyToAccept = dataBytes.length >= 4 &&
-            dataBytes[0] == 0 &&
-            dataBytes[1] == 255 &&
-            dataBytes[2] == 255 &&
-            dataBytes[3] == 255;
-        if (isAccepted) {
-          // accepted
-          this.isAccepted = isAccepted;
-        } else if (isRejected) {
-          resetStateRequester();
-        } else if (this.isAccepted || isReadyToAccept) {
-          debugPrint("Passed this point!");
-          // proceed to send
-          sendSong(songToSend!.audioPath);
-        }
-
-        return;
-      }
-
       // Convert bytes into a JSON string
       String jsonString = utf8.decode(dataBytes);
 
@@ -360,7 +377,8 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
 
       // Check if required fields are present in the song map
       if (!songMap.containsKey('songName') ||
-          !songMap.containsKey('artistName')) {
+          !songMap.containsKey('artistName') ||
+          !songMap.containsKey('audioPath')) {
         throw const FormatException(
             'Invalid song data: Missing required fields');
       }
@@ -369,14 +387,21 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
       if (!isRequestingToSend) {
         setState(() {
           isRequestingToSend = true;
-          isRequester = true;
+          isReceiver = true;
         });
       } else {
         setState(() {
           isRequestingToSend = false;
         });
-        throw const FormatException('Multiple requests to send');
+        throw const FormatException('Multiple requests sent');
       }
+
+      // set songFileName
+      String audioPath = songMap['audioPath'];
+      String audioFileName = Uri.file(audioPath).pathSegments.last;
+      setState(() {
+        songFileName = audioFileName;
+      });
 
       // Now you can use the song object as needed
       showDialog(
@@ -391,12 +416,15 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
               TextButton(
                 child: const Text("Cancel"),
                 onPressed: () {
+                  sendCancelRequest();
+                  resetStateReceiver();
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
                   child: const Text("Accept"),
                   onPressed: () {
+                    sendAcceptRequest();
                     Navigator.of(context).pop();
                     Navigator.push(
                         context,
@@ -433,6 +461,29 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     }
   }
 
+  void handleAcceptRequest(Payload payload) {
+    setState(() {
+      isAccepted = true;
+      sendFileInfo();
+    });
+  }
+
+  void handleCancelRequest(Payload payload) {
+    resetStateRequester();
+  }
+
+  void handleReadyToReceiveSong(Payload payload) {
+    if (isAccepted) {
+      debugPrint(songToSend!.audioPath);
+      widget.nearbyService
+          .sendFile(widget.device.deviceId, songToSend!.audioPath.toString());
+    }
+  }
+
+  void handlefileTransferComplete(Payload payload) async {
+    resetStateReceiver();
+  }
+
   void handleGenericMessage(Payload payload) {
     // Handle generic message
 
@@ -463,30 +514,38 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     });
   }
 
-  void handleSendingSong(Payload payload) {
+  // Implement the handle function for handling file information
+  void handlefileInfo(Payload payload) {
     try {
-      // get song name
-      // Find the index of the last '/' character to get the start of the file name
-      int fileNameStartIndex = songToSend!.audioPath.lastIndexOf('/') + 1;
-      String songFullName = songToSend!.audioPath.substring(fileNameStartIndex);
+      // Decode the file info data from payload
+      String info = utf8.decode(payload.data);
+      setState(() {
+        songSize = int.parse(info);
+      });
 
-      // Convert payload data to base64-encoded string
-      String base64Data = utf8.decode(payload.data);
-
-      // Decode base64 data back into bytes
-      Uint8List dataBytes = base64Decode(base64Data);
-
-      // Construct the full file path including the file name
-      String fullPath = '$pathToSaveSong/$songFullName';
-
-      // Write the received song data to the specified file path
-      File(fullPath).writeAsBytes(dataBytes);
-
-      // Optionally, you may perform any other necessary actions here after saving the song data
+      // Handle the file information as needed
+      // For example, you can display the file info or use it in your application logic
     } catch (e) {
-      // Handle errors
-      debugPrint('Error handling receiving song: $e');
-      // Show error dialog or handle error as needed
+      // Handle any errors that occur during processing file info
+      debugPrint('Error handling file information: $e');
+      // Optionally, you can show an error dialog to the user
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Error"),
+            content: Text("Failed to handle file information: $e."),
+            actions: [
+              TextButton(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -511,9 +570,17 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     });
   }
 
-  void onDirTileTap(String pathToSaveSong) {
+  void onDirTileTap(String pathToSaveSong) async {
     this.pathToSaveSong = pathToSaveSong;
-    sendRequestReadyToReceive();
+    // You can request multiple permissions at once.
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.manageExternalStorage,
+    ].request();
+    debugPrint(statuses[Permission.manageExternalStorage].toString());
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      // Either the permission was already granted before or the user just granted it.
+      sendReadyToReceive();
+    }
   }
 
   @override

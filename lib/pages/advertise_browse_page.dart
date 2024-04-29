@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:playshare/pages/connected_page.dart';
 
 enum DeviceType { advertiser, browser }
@@ -189,6 +190,25 @@ class _DevicesListScreenState extends State<DevicesListScreen> {
   }
 
   void init() async {
+    // external storage permission
+    await Permission.storage.isGranted;
+    await Permission.storage.request();
+
+    // Bluetooth permissions
+    bool granted = !(await Future.wait([
+      Permission.bluetooth.isGranted,
+      Permission.bluetoothAdvertise.isGranted,
+      Permission.bluetoothConnect.isGranted,
+      Permission.bluetoothScan.isGranted,
+    ]))
+        .any((element) => false);
+    [
+      Permission.bluetooth,
+      Permission.bluetoothAdvertise,
+      Permission.bluetoothConnect,
+      Permission.bluetoothScan
+    ].request();
+
     nearbyService = NearbyService();
     String devInfo = '';
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
