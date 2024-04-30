@@ -89,6 +89,46 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     });
   }
 
+  void checkTransferComplete() {
+    // Create a periodic timer that runs every 500 milliseconds
+    Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      // proccess saving to the selected
+      Directory('/storage/emulated/0/Download/.nearby')
+          .listSync()
+          .forEach((entity) {
+        if (entity is File && entity.lengthSync() >= songSize!) {
+          // moving file
+          debugPrint("moveing $entity to $pathToSaveSong/$songFileName");
+          String newFilePath = '$pathToSaveSong/$songFileName';
+          entity.renameSync(newFilePath);
+
+          // refresh UI
+          setState(() {
+            directoryListProvider.refreshDirectoryList();
+          });
+
+          // send transfer complete
+          sendFileTransferComplete();
+
+          // reset receiver
+          resetStateReceiver();
+
+          // cancel timer
+          timer.cancel();
+        } else if (entity is File) {
+          // show progress
+          double percentage =
+              (entity.lengthSync() / songSize! * 100).toDouble();
+          showToast("Transfer: $percentage %",
+              context: context,
+              axis: Axis.horizontal,
+              alignment: Alignment.center,
+              position: StyledToastPosition.bottom);
+        }
+      });
+    });
+  }
+
   // Modify the function signature to accept a Song object
   Future<void> sendRequest(String deviceID, Song song) async {
     // set song to send
@@ -279,29 +319,8 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
 
     // Check if the message string is valid and of type String
     if (messageString is Uint8List) {
-      debugPrint("received package!");
-
-      sendFileTransferComplete();
-      // proccess saving to the selected
-      Directory('/storage/emulated/0/Download/.nearby')
-          .listSync()
-          .forEach((entity) {
-        if (entity is File) {
-          debugPrint("moveing $entity to $pathToSaveSong/$songFileName");
-          String newFilePath = '$pathToSaveSong/$songFileName';
-          entity.renameSync(newFilePath);
-        }
-      });
-      setState(() {
-        directoryListProvider.refreshDirectoryList();
-      });
-      resetStateReceiver();
-      showToast("receiving file",
-          context: context,
-          axis: Axis.horizontal,
-          alignment: Alignment.center,
-          position: StyledToastPosition.bottom);
-
+      debugPrint("file transfer progress");
+      checkTransferComplete();
       return;
     }
 
@@ -504,6 +523,9 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     // Handle error message
     // You can display or log the error message
     debugPrint('Transaction error!');
+    sendError();
+    resetStateReceiver();
+    resetStateRequester();
     //reset all states
     setState(() {
       // handle states

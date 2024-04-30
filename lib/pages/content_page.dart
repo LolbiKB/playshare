@@ -33,6 +33,20 @@ class _ContentPageState extends State<ContentPage> {
   void dispose() {
     directoryListProvider.removeListener(_onDirectoryListChanged);
     super.dispose();
+
+    // get external storage permission
+    getStoragePermission();
+  }
+
+  void getStoragePermission() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.manageExternalStorage,
+    ].request();
+    debugPrint(statuses[Permission.manageExternalStorage].toString());
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      // Either the permission was already granted before or the user just granted it.
+      debugPrint("full access permission granted");
+    }
   }
 
   void _onDirectoryListChanged() {
