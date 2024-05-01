@@ -422,36 +422,52 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
         songFileName = audioFileName;
       });
 
-      // Now you can use the song object as needed
-      showDialog(
+      showModalBottomSheet<void>(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Sending Request"),
-            content: Center(
-                child:
-                    Text('${songMap['songName']} by ${songMap['artistName']}')),
-            actions: [
-              TextButton(
-                child: const Text("Cancel"),
-                onPressed: () {
-                  sendCancelRequest();
-                  resetStateReceiver();
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                  child: const Text("Accept"),
-                  onPressed: () {
-                    sendAcceptRequest();
-                    Navigator.of(context).pop();
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Request to Send"),
+                ListTile(
+                  title: Center(
+                    child: Text(
+                        '${songMap['songName']} by ${songMap['artistName']}'),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton(
+                      child: const Text("Cancel"),
+                      onPressed: () {
+                        sendCancelRequest();
+                        resetStateReceiver();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text("Accept"),
+                      onPressed: () {
+                        sendAcceptRequest();
+                        Navigator.of(context).pop();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
                             builder: (context) => ShareSelectDirPage(
-                                onDirTileTap: onDirTileTap)));
-                  }),
-            ],
+                              onDirTileTap: onDirTileTap,
+                              onPageExit: checkIfDirSelected,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           );
         },
       );
@@ -582,6 +598,7 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
       isRequestingToSend = false;
       isRequester = false;
       isAccepted = false;
+      songToSend = null;
     });
   }
 
@@ -589,11 +606,25 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
     setState(() {
       // handle states
       isReceiver = false;
+      pathToSaveSong = null;
+      songFileName = null;
+      songSize = null;
     });
   }
 
+  void checkIfDirSelected() {
+    if (pathToSaveSong == null) {
+      debugPrint("pathToSong is null");
+      sendCancelRequest();
+      resetStateReceiver();
+    }
+  }
+
   void onDirTileTap(String pathToSaveSong) async {
-    this.pathToSaveSong = pathToSaveSong;
+    setState(() {
+      this.pathToSaveSong = pathToSaveSong;
+    });
+
     // You can request multiple permissions at once.
     Map<Permission, PermissionStatus> statuses = await [
       Permission.manageExternalStorage,

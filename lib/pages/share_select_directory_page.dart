@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 
 class ShareSelectDirPage extends StatefulWidget {
   final Function(String pathToSaveSong) onDirTileTap;
-  const ShareSelectDirPage({super.key, required this.onDirTileTap});
+  final Function() onPageExit;
+  const ShareSelectDirPage(
+      {super.key, required this.onDirTileTap, required this.onPageExit});
 
   @override
   State<ShareSelectDirPage> createState() => _ShareSelectDirPageState();
@@ -29,6 +31,7 @@ class _ShareSelectDirPageState extends State<ShareSelectDirPage> {
   @override
   void dispose() {
     super.dispose();
+    widget.onPageExit();
   }
 
   void onDirTileTap(String pathToSaveSong) {

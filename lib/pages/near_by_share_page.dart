@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:playshare/pages/advertise_browse_page.dart';
+import 'package:playshare/pages/device_list_page.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:playshare/pages/content_page.dart';
 import 'package:playshare/pages/near_by_share_page.dart';
+import 'package:playshare/pages/nearby_share_page.dart';
 import 'package:playshare/pages/settings_page.dart';
 
 class MyDrawer extends StatelessWidget {
@@ -46,7 +47,7 @@ class MyDrawer extends StatelessWidget {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const NearBySharePage()));
+                        builder: (context) => const NearbySharePage()));
               },
             ),
           ),
@@ -65,7 +66,7 @@ class MyDrawer extends StatelessWidget {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ContentPage(),
+                      builder: (context) => const ContentPage(),
                     ));
               },
             ),
