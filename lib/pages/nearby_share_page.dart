@@ -263,13 +263,15 @@ class _NearbySharePageState extends State<NearbySharePage> {
       Permission.bluetoothAdvertise.isGranted,
       Permission.bluetoothConnect.isGranted,
       Permission.bluetoothScan.isGranted,
+      Permission.location.isGranted,
     ]))
         .any((element) => false);
     [
       Permission.bluetooth,
       Permission.bluetoothAdvertise,
       Permission.bluetoothConnect,
-      Permission.bluetoothScan
+      Permission.bluetoothScan,
+      Permission.location,
     ].request();
 
     nearbyService = NearbyService();

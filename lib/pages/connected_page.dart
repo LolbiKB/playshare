@@ -426,7 +426,7 @@ class _ShareConnectePageState extends State<ShareConnectePage> {
         context: context,
         builder: (BuildContext context) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
+            padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
